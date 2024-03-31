@@ -2,6 +2,8 @@
 from __future__ import annotations
 
 from typing import (
+    Any,
+    Type,
     Optional,
     Union,
 )
@@ -37,6 +39,21 @@ class Node:
 
     id: int = fields.typed_field(repr=False)
     children: xtuples.iTuple[Node] = fields.typed_field()
+
+    def generate_pages(
+        self, acc: dict[
+            Type[Page]: dict[Any, Page]
+        ]
+    ):
+        acc = {
+            t: t.accumulate_node(self, t_acc)
+            for t, t_acc in acc.items()
+        }
+
+        for child in self.children:
+            acc = child.generate_pages(acc)
+        
+        return acc
 
     @classmethod
     def new(cls, *args, children = xtuples.iTuple(), **kwargs):
@@ -154,6 +171,17 @@ class Node:
 
     # --
 
+
+# -----------------------------------------------
+
+@attrs.define(frozen=True)
+class Page(Node):
+    active: bool = fields.typed_field()
+
+    def accumulate_node(
+        self, node: Node, acc: dict[Any, Page]
+    ):
+        raise NotImplementedError()
 
 # -----------------------------------------------
 

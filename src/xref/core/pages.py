@@ -8,38 +8,11 @@ import xtuples
 from . import fields
 from . import nodes
 
+from .nodes import Page
+
 from attrs_strict import type_validator
 
 # -----------------------------------------------
-
-@attrs.define(frozen=True)
-class Page(nodes.Node):
-    active: bool = fields.typed_field()
-
-    # can be any node
-    # section, def, etc.
-    # rendered in order, recursively downwards
-    # sections hvae the same approach
-
-    # so rendering is up to the relevant child
-    # can have outer wrapping, but for the most part, just concatenate the strings
-
-    # ie. return lists of strings that we flatten at the outer layer and join
-
-    # arguably for terms and topics, allow that to be highlighted outside of the text, and then auto label all the text
-    # so the render takes pace in the database context, text render replaes term / topic / startup etc. with the relevant page url
-
-    def update(self, **kwargs):
-        return
-
-    def add(self, node):
-        pass
-
-    # TODO: filter?
-
-    def to_qmd(self, fp = None, dp = None):
-        # essentially map over nodes
-        return
 
 # about, contact, etc. other template pages?
 
