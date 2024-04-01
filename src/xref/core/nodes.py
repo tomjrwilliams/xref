@@ -46,7 +46,7 @@ class Node:
         ]
     ):
         acc = {
-            t: t.accumulate_node(self, t_acc)
+            t: t.init_pages(self, t_acc)
             for t, t_acc in acc.items()
         }
 
@@ -55,9 +55,30 @@ class Node:
         
         return acc
 
+    def accumulate_content(
+        self, acc: dict[
+            Type[Page]: dict[Any, Page]
+        ]
+    ):
+        acc = {
+            t: {
+                k: page.extract_content(self)
+                for k, page in t_acc.items()
+            }
+            for t, t_acc in acc.items()
+        }
+
+        for child in self.children:
+            acc = child.accumulate_content(acc)
+        
+        return acc
+
     @classmethod
     def new(cls, *args, children = xtuples.iTuple(), **kwargs):
         return cls(id(), children, *args, **kwargs)
+
+    def update(self, **kwargs):
+        return attrs.evolve(self, **kwargs)
 
     # --
 
@@ -117,9 +138,6 @@ class Node:
     def topic(self, *args, **kwargs):
         return self.add(Topic.new(*args, **kwargs))
 
-    def category(self, *args, **kwargs):
-        return self.add(Category.new(*args, **kwargs))
-
     # --
 
     def citation(self, *args, **kwargs):
@@ -139,6 +157,9 @@ class Node:
         Section(children=iTuple(Quote(children=iTuple(), text='a')), title='a')
         """
         return self.add(Quote.new(*args, **kwargs))
+
+    def extract(self, *args, **kwargs):
+        return self.add(Extract.new(*args, **kwargs))
 
     def summary(self, *args, **kwargs):
         return self.add(Summary.new(*args, **kwargs))
@@ -172,16 +193,14 @@ class Node:
     # --
 
 
+def remove_children(n: Node):
+    return n.update(children=xtuples.iTuple())
+
 # -----------------------------------------------
 
 @attrs.define(frozen=True)
 class Page(Node):
-    active: bool = fields.typed_field()
-
-    def accumulate_node(
-        self, node: Node, acc: dict[Any, Page]
-    ):
-        raise NotImplementedError()
+    pass
 
 # -----------------------------------------------
 
@@ -193,7 +212,8 @@ class Page(Node):
 
 @attrs.define(frozen=True)
 class Person(Node):
-    pass
+    
+    profile: bool = fields.typed_field(default=False)
 
 
 person = Person.new
@@ -227,7 +247,8 @@ investor = Investor.new
 
 @attrs.define(frozen=True)
 class Organisation(Node):
-    pass
+    
+    profile: bool = fields.typed_field(default=False)
 
 
 organisation = Organisation.new
@@ -293,7 +314,8 @@ section = Section.new
 # eg. peptide
 @attrs.define(frozen=True)
 class Term(Node):
-    pass
+    
+    text: str = fields.typed_field()
 
 
 term = Term.new
@@ -305,18 +327,13 @@ term = Term.new
 # eg. peptide
 @attrs.define(frozen=True)
 class Topic(Node):
-    pass
+    
+    text: str = fields.typed_field()
 
 
 topic = Topic.new
 
 
-@attrs.define(frozen=True)
-class Category(Node):
-    pass
-
-
-category = Category.new
 
 
 # -----------------------------------------------
@@ -365,6 +382,13 @@ reference = Reference.new
 class Text(Node):
     text: str = fields.typed_field()
 
+    # below are just paragraph repr
+
+    # aside from quote and extract
+
+    def allowed_children(self):
+        return [Term, Topic]
+
 text = Text.new
 
 # -----------------------------------------------
@@ -376,6 +400,13 @@ class Quote(Text):
 
 quote = Quote.new
 
+@attrs.define(frozen=True)
+class Extract(Text):
+    pass
+
+
+extract = Extract.new
+
 # eg. of a particular bit of a source
 # a document as a whole
 # depnending on what the source is, change the format
@@ -385,7 +416,7 @@ quote = Quote.new
 
 @attrs.define(frozen=True)
 class Summary(Text):
-    ref: Node = fields.typed_field()
+    # ref: Node = fields.typed_field()
     pass
 
 summary = Summary.new
