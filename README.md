@@ -1,2 +1,0 @@
-# xref
-insert dalek ascii
