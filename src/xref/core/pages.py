@@ -1,8 +1,12 @@
 
 from __future__ import annotations
 
-import pprint
+import datetime
 
+import pprint
+import io
+
+import yaml
 import attrs
 
 from typing import (
@@ -11,6 +15,7 @@ from typing import (
 
 import xtuples
 
+from . import utils
 from . import fields
 from . import nodes
 
@@ -75,7 +80,7 @@ from attrs_strict import type_validator
 # and then the same style, but broken by each of the other page types
 # eg. articles referenced in, startup write ups, etc.
 
-# ie. Header: Articles, then list of the above
+# ie. Header: Papers, then list of the above
 # Header: Startups, etc.
 
 # here, it's instead the node with the term, and one either side, with ... beyomd
@@ -127,59 +132,6 @@ from attrs_strict import type_validator
 # and any headers extracted (but they're now the same font size as normal, not large)
 
 
-
-# -----------------------------------------------
-
-@attrs.define(frozen=True)
-class Briefing(Page):
-    # eg, of a startup
-
-    # formal write up of something that's not specifically a paper
-    # but is still of an external thing
-    
-    active: bool = fields.typed_field(default=True)
-  
-@attrs.define(frozen=True)
-class Article(Page):
-    
-    active: bool = fields.typed_field(default=True)
-
-    def allowed_children(self):
-        return [nodes.Summary]
-
-
-@attrs.define(frozen=True)
-class Post(Page):
-    # the most 'internal' in that it can be cross sectional content
-    # rank first?
-
-    # papers second, then briefings
-    
-    active: bool = fields.typed_field(default=True)
-
-    # internal node id acc
-
-    # BELOW ARe all on theparent class
-
-    # def resolve(self):
-    #     # resolve ids to actual nodes
-    #     return
-
-    # # outbound id links eg. via selectors
-    # def link(self):
-    #     return
-
-    # def render(self):
-    #     return
-
-    # def section(self):
-    #     return
-
-# above are the written kind, just show as is
-
-# and appear in the feed
-
-# below are only via the top nav into side nav
 
 # -----------------------------------------------
 
@@ -268,6 +220,23 @@ class Term(Page):
     ):
         return extract_text_containing(self, node, self.target)
 
+    @classmethod
+    def nav_folder(cls):
+        return "terms"
+
+    @classmethod
+    def nav_title(cls):
+        return "Terms"
+
+    def title(self):
+        return self.target
+
+    def handle(self):
+        return self.target
+
+
+term = Term.new
+
 @attrs.define(frozen=True)
 class Topic(Page):
     
@@ -291,7 +260,22 @@ class Topic(Page):
     ):
         return extract_text_containing(self, node, self.target)
 
+    @classmethod
+    def nav_folder(cls):
+        return "topics"
 
+    @classmethod
+    def nav_title(cls):
+        return "Topics"
+
+    def title(self):
+        return self.target
+
+    def handle(self):
+        return self.target
+
+
+topic = Topic.new
 
 # -----------------------------------------------
 
@@ -329,6 +313,8 @@ class Person(Page):
         )
 
 
+person = Person.new
+
 @attrs.define(frozen=True)
 class Organisation(Page):
 
@@ -362,5 +348,118 @@ class Organisation(Page):
             clean_func=nodes.remove_children,
         )
 
+organisation = Organisation.new
+
+# -----------------------------------------------
+
+@attrs.define(frozen=True)
+class Brief(Page):
+    # eg, of a startup
+
+    # formal write up of something that's not specifically a paper
+    # but is still of an external thing
+
+    title: str = fields.typed_field()
+    created: datetime.date = fields.typed_field()
+
+    active: bool = fields.typed_field(default=True)
+
+    handle: Optional[str] = fields.optional_field()
+
+    @classmethod
+    def nav_folder(cls):
+        return "briefs"
+
+    @classmethod
+    def nav_title(cls):
+        return "Briefs"
+
+brief = Brief.new
+  
+@attrs.define(frozen=True)
+class Paper(Page):
+
+    title: str = fields.typed_field()
+    created: datetime.date = fields.typed_field()
+    
+    active: bool = fields.typed_field(default=True)
+
+    handle: Optional[str] = fields.optional_field()
+
+    def allowed_children(self):
+        return [nodes.Summary]
+
+    @classmethod
+    def nav_folder(cls):
+        return "papers"
+
+    @classmethod
+    def nav_title(cls):
+        return "Papers"
+
+    def header_qmd(self):
+        yml = dict(
+            title=self.get_string_like("title"),
+            # description: "Post description"
+            # author: "Fizz McPhee"
+            date=self.created.strftime("%m/%d/%Y"),
+            # date: "5/22/2021"
+            # categories:
+            # - news
+            # - code
+            # - analysis
+        )
+        s = utils.qmd_header(yml)
+        return s
+
+article = Paper.new
+
+@attrs.define(frozen=True)
+class Post(Page):
+    # the most 'internal' in that it can be cross sectional content
+    # rank first?
+
+    # papers second, then briefs
+
+    title: str = fields.typed_field()
+    created: datetime.date = fields.typed_field()
+    
+    active: bool = fields.typed_field(default=True)
+
+    handle: Optional[str] = fields.optional_field()
+
+    @classmethod
+    def nav_folder(cls):
+        return "posts"
+
+    @classmethod
+    def nav_title(cls):
+        return "Posts"
+
+    # internal node id acc
+
+    # BELOW ARe all on theparent class
+
+    # def resolve(self):
+    #     # resolve ids to actual nodes
+    #     return
+
+    # # outbound id links eg. via selectors
+    # def link(self):
+    #     return
+
+    # def render(self):
+    #     return
+
+    # def section(self):
+    #     return
+
+post = Post.new
+
+# above are the written kind, just show as is
+
+# and appear in the feed
+
+# below are only via the top nav into side nav
 
 # -----------------------------------------------

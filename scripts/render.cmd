@@ -1,0 +1,1 @@
+quarto render %1

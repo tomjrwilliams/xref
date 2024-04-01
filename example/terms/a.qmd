@@ -1,0 +1,12 @@
+---
+format:
+  html:
+    code-fold: true
+    number-sections: true
+    self-contained: true
+    toc: true
+page-layout: full
+title: a
+
+---
+

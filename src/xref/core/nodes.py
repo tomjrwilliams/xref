@@ -1,6 +1,9 @@
 
 from __future__ import annotations
 
+import io
+import yaml
+
 from typing import (
     Any,
     Type,
@@ -10,6 +13,7 @@ from typing import (
 
 import attrs
 
+from . import utils
 from . import fields
 
 import xtuples
@@ -79,6 +83,15 @@ class Node:
 
     def update(self, **kwargs):
         return attrs.evolve(self, **kwargs)
+
+    def get_string_like(self, k):
+        assert hasattr(self, k), self
+        v = getattr(self, k)
+        if v is None:
+            return v
+        if isinstance(v, str):
+            return v
+        return v()
 
     # --
 
@@ -200,7 +213,60 @@ def remove_children(n: Node):
 
 @attrs.define(frozen=True)
 class Page(Node):
-    pass
+
+    def header_qmd(self):
+        yml = dict(
+            title=self.get_string_like("title")
+        )
+        return utils.qmd_header(yml)
+
+    def body_qmd(self):
+        return ""
+
+    def footer_qmd(self):
+        return ""
+
+    def to_qmd(self):
+        return "\n".join([
+            self.header_qmd(),
+            self.body_qmd(),
+            self.footer_qmd(),
+        ])
+    
+    @classmethod
+    def nav_title(cls):
+        return None
+
+    @classmethod
+    def nav_folder(cls):
+        return None
+
+    @classmethod
+    def init_pages(
+        cls, node: Node, acc: dict[Any, Page]
+    ):
+        return acc
+
+    def extract_content(
+        self, node: Node,
+    ):
+        return self
+
+    @classmethod
+    def index_qmd(cls, fp_ps):
+        # optional sorting, what to show in meta
+        # categories?
+        yml = dict(
+            title=cls.nav_title(),
+            listing=dict(
+                contents=[
+                    fp.name
+                    for fp in fp_ps.keys()
+                ]
+            )
+        )
+        return utils.qmd_header(yml)
+
 
 # -----------------------------------------------
 

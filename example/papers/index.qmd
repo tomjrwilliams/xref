@@ -1,0 +1,14 @@
+---
+format:
+  html:
+    code-fold: true
+    number-sections: true
+    self-contained: true
+    toc: true
+listing:
+  contents:
+  - Example.qmd
+page-layout: full
+title: Papers
+
+---
