@@ -3,6 +3,7 @@ from __future__ import annotations
 import enum
 from typing import NamedTuple, Optional, Union, TYPE_CHECKING
 
+from ..utils import *
 from .core import *
 from .yml import *
 
@@ -287,10 +288,10 @@ class Nav(
 
 if TYPE_CHECKING:
     nav = (
-        Chain.new(Nav.new())
-        .into(NavTop.new)
+        fTree.new(Nav.new())
+        .fork(NavTop.new)
         .call("set", title="top")
-        .close(lambda nav, top: nav.set(top=top))
+        .merge(lambda nav, top: nav.set(top=top))
         .done()
     )
 
