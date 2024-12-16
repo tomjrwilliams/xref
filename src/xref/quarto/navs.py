@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import enum
-from typing import NamedTuple, Optional, Union
+from typing import NamedTuple, Optional, Union, TYPE_CHECKING
 
 from .core import *
 from .yml import *
@@ -228,7 +228,7 @@ class Nav(
     TraitYmlHasRepr,
     TraitYmlHasFieldMap,
 ):
-    """
+    r"""
     >>> nav = (
     ...     Nav.new()
     ...     .set(top=NavTop.new(
@@ -253,8 +253,28 @@ class Nav(
     ...         ]
     ...     ))
     ... )
-    >>> print(write_yaml(nav))
+    >>> _ = list(map(print, write_yaml(nav).split("\n")))
+    title: "top"
+    tools:
+      - href: tool.qmd
+      - test.qmd
+      - href: text.qmd
+        text: "Test"
+    left:
+      - test.qmd
+      - href: text.qmd
+        text: "Test"
+        contents:
+          - abc.qmd
+          - href:
+            text: "new"
+      - def.qmd
+      - href: b
+        text: ""
     """
+    @classmethod
+    def cls(cls, self: Nav):
+        return self
 
     @classmethod
     def yml_field_map(cls):
@@ -263,6 +283,16 @@ class Nav(
             side="sidebar",
         )
 
+# ------------------------------------
+
+if TYPE_CHECKING:
+    nav = (
+        Chain.new(Nav.new())
+        .into(NavTop.new)
+        .call("set", title="top")
+        .close(lambda nav, top: nav.set(top=top))
+        .done()
+    )
 
 # ------------------------------------
 

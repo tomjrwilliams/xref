@@ -4,8 +4,8 @@ from functools import partial
 
 from .core import *
 
-# ------------------------------------
 
+# ------------------------------------
 
 class TraitYml(TraitQuarto):
     pass
@@ -178,7 +178,7 @@ def gen_yaml_lines(
 
 def write_yaml_line(pad: str, yl: YmlLine):
     return (
-        (pad * yl.indent)
+        (pad * (yl.indent - 1))
         + (
             ""
             if not yl.is_list
