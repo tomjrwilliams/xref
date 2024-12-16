@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import io
@@ -23,13 +22,16 @@ import xtuples
 global ID
 ID: int = 0
 
+
 def id():
-    global ID 
+    global ID
     res = ID
     ID += 1
     return res
 
+
 # -----------------------------------------------
+
 
 @attrs.define(frozen=True)
 class Node:
@@ -45,9 +47,7 @@ class Node:
     children: xtuples.iTuple[Node] = fields.typed_field()
 
     def generate_pages(
-        self, acc: dict[
-            Type[Page]: dict[Any, Page]
-        ]
+        self, acc: dict[Type[Page] : dict[Any, Page]]
     ):
         acc = {
             t: t.init_pages(self, t_acc)
@@ -56,13 +56,11 @@ class Node:
 
         for child in self.children:
             acc = child.generate_pages(acc)
-        
+
         return acc
 
     def accumulate_content(
-        self, acc: dict[
-            Type[Page]: dict[Any, Page]
-        ]
+        self, acc: dict[Type[Page] : dict[Any, Page]]
     ):
         acc = {
             t: {
@@ -74,11 +72,13 @@ class Node:
 
         for child in self.children:
             acc = child.accumulate_content(acc)
-        
+
         return acc
 
     @classmethod
-    def new(cls, *args, children = xtuples.iTuple(), **kwargs):
+    def new(
+        cls, *args, children=xtuples.iTuple(), **kwargs
+    ):
         return cls(id(), children, *args, **kwargs)
 
     def update(self, **kwargs):
@@ -100,14 +100,15 @@ class Node:
 
     def add(self, child: Node):
         assert type(child) in self.allowed_children(), dict(
-            self=self, allowed=self.allowed_children(), child=child,
+            self=self,
+            allowed=self.allowed_children(),
+            child=child,
         )
         return attrs.evolve(
-            self,
-            children = self.children.append(child)
+            self, children=self.children.append(child)
         )
 
-    # -- 
+    # --
 
     # def person(self):
     #     return self.add(Person.new())
@@ -147,7 +148,7 @@ class Node:
 
     def term(self, *args, **kwargs):
         return self.add(Term.new(*args, **kwargs))
-        
+
     def topic(self, *args, **kwargs):
         return self.add(Topic.new(*args, **kwargs))
 
@@ -209,15 +210,15 @@ class Node:
 def remove_children(n: Node):
     return n.update(children=xtuples.iTuple())
 
+
 # -----------------------------------------------
+
 
 @attrs.define(frozen=True)
 class Page(Node):
 
     def header_qmd(self):
-        yml = dict(
-            title=self.get_string_like("title")
-        )
+        yml = dict(title=self.get_string_like("title"))
         return utils.qmd_header(yml)
 
     def body_qmd(self):
@@ -227,12 +228,14 @@ class Page(Node):
         return ""
 
     def to_qmd(self):
-        return "\n".join([
-            self.header_qmd(),
-            self.body_qmd(),
-            self.footer_qmd(),
-        ])
-    
+        return "\n".join(
+            [
+                self.header_qmd(),
+                self.body_qmd(),
+                self.footer_qmd(),
+            ]
+        )
+
     @classmethod
     def nav_title(cls):
         return None
@@ -242,13 +245,12 @@ class Page(Node):
         return None
 
     @classmethod
-    def init_pages(
-        cls, node: Node, acc: dict[Any, Page]
-    ):
+    def init_pages(cls, node: Node, acc: dict[Any, Page]):
         return acc
 
     def extract_content(
-        self, node: Node,
+        self,
+        node: Node,
     ):
         return self
 
@@ -259,11 +261,8 @@ class Page(Node):
         yml = dict(
             title=cls.nav_title(),
             listing=dict(
-                contents=[
-                    fp.name
-                    for fp in fp_ps.keys()
-                ]
-            )
+                contents=[fp.name for fp in fp_ps.keys()]
+            ),
         )
         return utils.qmd_header(yml)
 
@@ -278,7 +277,7 @@ class Page(Node):
 
 @attrs.define(frozen=True)
 class Person(Node):
-    
+
     profile: bool = fields.typed_field(default=False)
 
 
@@ -313,7 +312,7 @@ investor = Investor.new
 
 @attrs.define(frozen=True)
 class Organisation(Node):
-    
+
     profile: bool = fields.typed_field(default=False)
 
 
@@ -359,7 +358,6 @@ fund = Fund.new
 # -----------------------------------------------
 
 
-
 @attrs.define(frozen=True)
 class Section(Node):
     title: str = fields.typed_field()
@@ -370,17 +368,19 @@ class Section(Node):
             #
         ]
 
+
 section = Section.new
 
 
 # -----------------------------------------------
+
 
 # inline term in a text block is given a link to the entry in the glossary page (or relevant page if the glossary is split)
 # ideally also hover over to see the definition (? otional flag to turn off for this doc: "... Term(x, hover=False) ..." etc.)
 # eg. peptide
 @attrs.define(frozen=True)
 class Term(Node):
-    
+
     text: str = fields.typed_field()
 
 
@@ -390,22 +390,22 @@ term = Term.new
 # topics can be used? presumably pull out the relevant sections (decide what level of depth to pull out)
 # to build up a page of effectively static search results for that topic, that links to the location in the actual article
 
+
 # eg. peptide
 @attrs.define(frozen=True)
 class Topic(Node):
-    
+
     text: str = fields.typed_field()
 
 
 topic = Topic.new
 
 
-
-
 # -----------------------------------------------
 
+
 # follow the format you get provided for you
-# don't have to be rendered to be added to page 
+# don't have to be rendered to be added to page
 # for referencing, either there or elsewhere
 @attrs.define(frozen=True)
 class Citation(Node):
@@ -444,6 +444,7 @@ reference = Reference.new
 
 # -----------------------------------------------
 
+
 @attrs.define(frozen=True)
 class Text(Node):
     text: str = fields.typed_field()
@@ -455,9 +456,11 @@ class Text(Node):
     def allowed_children(self):
         return [Term, Topic]
 
+
 text = Text.new
 
 # -----------------------------------------------
+
 
 @attrs.define(frozen=True)
 class Quote(Text):
@@ -465,6 +468,7 @@ class Quote(Text):
 
 
 quote = Quote.new
+
 
 @attrs.define(frozen=True)
 class Extract(Text):
@@ -480,15 +484,18 @@ extract = Extract.new
 # versus a section of a document, can be a kind of inline quote, greyed out say at the top fo the section
 # or Summary: italics (For section)
 
+
 @attrs.define(frozen=True)
 class Summary(Text):
     # ref: Node = fields.typed_field()
     pass
 
+
 summary = Summary.new
 
 # the idea with questioons is that they essentially form sub headers
 # where the answer is then likely a series of points
+
 
 @attrs.define(frozen=True)
 class Question(Text):
@@ -500,6 +507,7 @@ question = Question.new
 # need to be able to make inline term references
 # ideally without breaking flow, so literally as below
 # ie. ".... Term(x) ..."
+
 
 # direct response to question
 # can break and continue over a term definition
@@ -521,6 +529,7 @@ class Definition(Text):
 
 definition = Definition.new
 
+
 # eg. of definition? ie. explanations and examples attach to particular answers (Say)
 # definitions, summaries
 # ie. extra text that isn't strictly necessary but is helpful
@@ -530,6 +539,7 @@ class Explanation(Text):
 
 
 explanation = Explanation.new
+
 
 # examples being a particular kind of explanation
 # eg. link to explanation / definition
@@ -560,10 +570,12 @@ comment = Comment.new
 
 # -----------------------------------------------
 
+
 # code snippets
 @attrs.define(frozen=True)
 class Code(Node):
     pass
+
 
 code = Code.new
 
@@ -600,8 +612,10 @@ code = Code.new
 # where we can acc back into the page modules
 # to get everything we need to build the site?
 
-def index(module, acc = None):
+
+def index(module, acc=None):
     pass
+
 
 # -----------------------------------------------
 
@@ -620,10 +634,9 @@ def index(module, acc = None):
 # allow re identifying if re use the same quote in another
 
 
-
 # auto build a glossary from the terms
 
-# a bibliography from the refs, grouped by paper (and where referenced) 
+# a bibliography from the refs, grouped by paper (and where referenced)
 
 
 # where the above is across the whole site, but generatable per post
@@ -660,7 +673,6 @@ def index(module, acc = None):
 # eg. flags on a term to show a list on the page of other uses, and just include a link to the glossary page (that also includes uses)
 
 # all essentialyl a wrapper aroudn quarto
-
 
 
 # ie you want it searchable both by us for research, and evne clone the repo and use the command line

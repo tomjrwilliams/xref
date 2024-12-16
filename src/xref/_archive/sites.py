@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import pprint
@@ -27,15 +26,17 @@ import xtuples
 
 # -----------------------------------------------
 
+
 def _example_site():
-    p = pages.Paper.new("Example", datetime.date(2024, 1, 1)).add(nodes.summary("a b c").term("a"))
+    p = pages.Paper.new(
+        "Example", datetime.date(2024, 1, 1)
+    ).add(nodes.summary("a b c").term("a"))
     s = Site.new("Example").add(p)
     return s
 
+
 def init_site(ps):
-    acc: dict[
-        Type[pages.Page]: dict[Any, pages.Page]
-    ] = {
+    acc: dict[Type[pages.Page] : dict[Any, pages.Page]] = {
         pages.Post: {},
         pages.Paper: {},
         pages.Brief: {},
@@ -50,11 +51,13 @@ def init_site(ps):
                 acc[t][p.title] = p
     return acc
 
+
 def drop_dp(dp, fp):
     if isinstance(fp, (str, pathlib.Path)):
         res = pathlib.Path(str(fp).replace(str(dp), "."))
         return str(res)
     return [drop_dp(dp, _fp) for _fp in fp]
+
 
 @attrs.define(frozen=True)
 class Site:
@@ -63,13 +66,27 @@ class Site:
     pages: xtuples.iTuple[pages.Page] = fields.typed_field()
 
     def add(self, page: pages.Page):
-        return attrs.evolve(self, pages=self.pages.append(page))
+        return attrs.evolve(
+            self, pages=self.pages.append(page)
+        )
 
     @classmethod
-    def new(cls, title, pages = xtuples.iTuple()):
+    def new(cls, title, pages=xtuples.iTuple()):
         return cls(title, pages)
 
-    # -- 
+    # TODO: all index pages (startup,t erm, topci) with a page get a category?
+
+    # TODO: need a way to flag out terms eg. as not being worthy of their own page?
+    # ie. set to profile=false
+
+    # TODO: ah, so both that, adn a flag for if they have a category (else default to profile)
+
+    # TODO: to exteact the content, also pass a list of flattened page contents
+    # with the pages
+    # because can then find the id in the list, and then extract content from nodes within a certain number of indices
+    # flatten will be in the order of .to_qmd calls
+
+    # --
 
     def generate_pages(self):
         # """
@@ -86,11 +103,10 @@ class Site:
         for page in self.pages:
             acc = page.generate_pages(acc)
         return {
-            t: k_ps for t, k_ps in acc.items()
-            if len(k_ps)
+            t: k_ps for t, k_ps in acc.items() if len(k_ps)
         }
 
-    def accumulate_content(self, acc = None):
+    def accumulate_content(self, acc=None):
         # """
         # >>> s = _example_site()
         # >>> acc = s.accumulate_content()
@@ -106,20 +122,18 @@ class Site:
         for page in self.pages:
             acc = page.accumulate_content(acc)
         return {
-            t: k_ps for t, k_ps in acc.items()
-            if len(k_ps)
+            t: k_ps for t, k_ps in acc.items() if len(k_ps)
         }
-
 
     # --
 
-    def create_pages(self, dp, acc = None):
+    def create_pages(self, dp, acc=None):
 
         res = {}
 
         if acc is None:
             acc = self.accumulate_content()
-        
+
         dp = pathlib.Path(dp)
         dp.mkdir(exist_ok=True, parents=True)
 
@@ -129,43 +143,45 @@ class Site:
 
             if not t.nav_folder():
                 continue
-            
+
             t_dp = dp / t.nav_folder()
             t_dp.mkdir(exist_ok=True, parents=True)
 
             for k, p in k_ps.items():
 
-                handle = p.get_string_like('handle')
+                handle = p.get_string_like("handle")
                 if handle is None:
-                    handle = p.get_string_like("title").replace(" ", "_")
-                
+                    handle = p.get_string_like(
+                        "title"
+                    ).replace(" ", "_")
+
                 fp = t_dp / f"{handle}.qmd"
 
                 qmd = p.to_qmd()
 
-                with fp.open('w+') as f:
+                with fp.open("w+") as f:
                     f.write(qmd)
-                
+
                 res[t][fp] = p
-            
+
         return res
 
     def write_roots(self, dp, res):
         dp = pathlib.Path(dp)
-        
+
         roots = {}
 
         for t, fp_ps in res.items():
 
             if not t.nav_folder():
                 continue
-            
+
             t_dp = dp / t.nav_folder()
             t_dp.mkdir(exist_ok=True, parents=True)
 
             root_fp = t_dp / "index.qmd"
 
-            with root_fp.open('w+') as f:
+            with root_fp.open("w+") as f:
                 f.write(t.index_qmd(fp_ps))
 
             roots[t] = root_fp
@@ -180,22 +196,35 @@ class Site:
         yml = dict(
             title="Home",
             listing=dict(
-                contents=drop_dp(dp, sum(([
-                    fp
-                    for fp in res[t].keys()
-                ] for t in [
-                    pages.Post,
-                    pages.Paper,
-                    pages.Brief,
-                ] if t in res), []))
-            )
+                contents=drop_dp(
+                    dp,
+                    sum(
+                        (
+                            [fp for fp in res[t].keys()]
+                            for t in [
+                                pages.Post,
+                                pages.Paper,
+                                pages.Brief,
+                            ]
+                            if t in res
+                        ),
+                        [],
+                    ),
+                )
+            ),
         )
         s = utils.qmd_header(yml)
-        with index_fp.open('w+') as f:
+        with index_fp.open("w+") as f:
             f.write(s)
         return index_fp
 
-    def write_yaml(self, dp, res, roots, index_fp, ):
+    def write_yaml(
+        self,
+        dp,
+        res,
+        roots,
+        index_fp,
+    ):
         dp = pathlib.Path(dp)
 
         sidebar = {
@@ -209,15 +238,21 @@ class Site:
 
             root_fp = roots[t]
 
-            side_contents.append(dict(
-                section=t.nav_title(),
-                # style="docked",
-                # background="light",
-                contents=drop_dp(dp, [
-                    # root_fp
-                ] + list(fp_ps.keys()))
-                # TODO: relative paths?
-            ))
+            side_contents.append(
+                dict(
+                    section=t.nav_title(),
+                    # style="docked",
+                    # background="light",
+                    contents=drop_dp(
+                        dp,
+                        [
+                            # root_fp
+                        ]
+                        + list(fp_ps.keys()),
+                    ),
+                    # TODO: relative paths?
+                )
+            )
 
         sidebar["contents"] = side_contents
 
@@ -229,13 +264,14 @@ class Site:
                     text="Home",
                     file=drop_dp(dp, index_fp),
                 )
-            ] + [
+            ]
+            + [
                 dict(
                     text=t.nav_title(),
                     file=drop_dp(dp, roots[t]),
                 )
                 for t, fp_ps in res.items()
-            ]
+            ],
         }
 
         yml = {
@@ -243,42 +279,42 @@ class Site:
                 "type": "website",
             },
             "format": {
-                "html": {
-                    "theme": "flatly"
-                },
+                "html": {"theme": "flatly"},
             },
             "website": {
                 "title": self.title,
                 "navbar": navbar,
                 "sidebar": sidebar,
-            }
+            },
         }
 
         fp = dp / "_quarto.yml"
 
-        with fp.open('w+') as f:
+        with fp.open("w+") as f:
             yaml.dump(yml, f, default_flow_style=False)
-        
+
         return fp
 
-    def write_qmd(self, dp, acc = None):
-        
+    def write_qmd(self, dp, acc=None):
         """
         >>> s = _example_site()
         >>> s.write_qmd("./example")
         """
-        
+
         if acc is None:
             acc = self.accumulate_content()
 
-        res = self.create_pages(dp, acc = acc)
+        res = self.create_pages(dp, acc=acc)
         roots = self.write_roots(dp, res)
         index_fp = self.write_index(dp, res)
 
         yaml_fp = self.write_yaml(
-            dp, res, roots, index_fp, 
+            dp,
+            res,
+            roots,
+            index_fp,
         )
-        
+
         return
 
     # --
@@ -293,7 +329,8 @@ class Site:
     def render_site(self):
         # call render on the directory
         return
-        
+
     # --
-    
+
+
 # -----------------------------------------------

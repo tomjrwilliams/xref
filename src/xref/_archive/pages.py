@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import datetime
@@ -9,9 +8,7 @@ import io
 import yaml
 import attrs
 
-from typing import (
-    Optional, Any, Type, Callable, Union
-)
+from typing import Optional, Any, Type, Callable, Union
 
 import xtuples
 
@@ -28,8 +25,6 @@ from attrs_strict import type_validator
 # about, contact, etc. other template pages?
 
 # if on the toolbar or not?
-
-
 
 
 # the specific kinds just usb class page, take meta / targeting data (eg. person if a eprson page)
@@ -110,7 +105,6 @@ from attrs_strict import type_validator
 # with topic and definition
 
 
-
 # then the written ones, have at the bottom as foot note
 
 # the terms, topics, etc.
@@ -124,13 +118,11 @@ from attrs_strict import type_validator
 # small page sep line between each section
 
 
-
 # the derived ones use extract for the extraction
 
 # make the target name bold
 
 # and any headers extracted (but they're now the same font size as normal, not large)
-
 
 
 # -----------------------------------------------
@@ -142,7 +134,7 @@ def init_if_type(
     T: Type[Node],
     P: Type[Page],
     node_func: Union[str, Callable],
-    key_func: Optional[Union[str, Callable]]=None,
+    key_func: Optional[Union[str, Callable]] = None,
     and_func: Optional[Callable] = None,
 ):
     if key_func is None:
@@ -165,9 +157,8 @@ def init_if_type(
             acc[k] = n
     return acc
 
-def extract_text_containing(
-    self, node, txt
-):
+
+def extract_text_containing(self, node, txt):
     if isinstance(node, nodes.Text):
         if txt in node.text:
             return self.update(
@@ -175,6 +166,7 @@ def extract_text_containing(
             )
         return self
     return self
+
 
 def extract_text_with_child(
     self,
@@ -188,18 +180,20 @@ def extract_text_with_child(
                 ch = clean_func(ch)
             if child == ch:
                 return self.update(
-                    occurences=self.occurences.append(node.id)
+                    occurences=self.occurences.append(
+                        node.id
+                    )
                 )
         return self
     return self
 
-# -----------------------------------------------
 
+# -----------------------------------------------
 
 
 @attrs.define(frozen=True)
 class Term(Page):
-    
+
     target: str = fields.typed_field()
 
     occurences: xtuples.iTuple[int] = fields.typed_field(
@@ -208,17 +202,22 @@ class Term(Page):
     active: bool = fields.typed_field(default=True)
 
     @classmethod
-    def init_pages(
-        cls, node: Node, acc: dict[Any, Page]
-    ):
+    def init_pages(cls, node: Node, acc: dict[Any, Page]):
         return init_if_type(
-            node, acc, nodes.Term, cls, "text",
+            node,
+            acc,
+            nodes.Term,
+            cls,
+            "text",
         )
 
     def extract_content(
-        self, node: Node,
+        self,
+        node: Node,
     ):
-        return extract_text_containing(self, node, self.target)
+        return extract_text_containing(
+            self, node, self.target
+        )
 
     @classmethod
     def nav_folder(cls):
@@ -237,9 +236,10 @@ class Term(Page):
 
 term = Term.new
 
+
 @attrs.define(frozen=True)
 class Topic(Page):
-    
+
     target: str = fields.typed_field()
 
     occurences: xtuples.iTuple[int] = fields.typed_field(
@@ -248,17 +248,22 @@ class Topic(Page):
     active: bool = fields.typed_field(default=True)
 
     @classmethod
-    def init_pages(
-        cls, node: Node, acc: dict[Any, Page]
-    ):
+    def init_pages(cls, node: Node, acc: dict[Any, Page]):
         return init_if_type(
-            node, acc, nodes.Topic, cls, "text",
+            node,
+            acc,
+            nodes.Topic,
+            cls,
+            "text",
         )
 
     def extract_content(
-        self, node: Node,
+        self,
+        node: Node,
     ):
-        return extract_text_containing(self, node, self.target)
+        return extract_text_containing(
+            self, node, self.target
+        )
 
     @classmethod
     def nav_folder(cls):
@@ -279,6 +284,7 @@ topic = Topic.new
 
 # -----------------------------------------------
 
+
 @attrs.define(frozen=True)
 class Person(Page):
 
@@ -288,22 +294,21 @@ class Person(Page):
         default=xtuples.iTuple()
     )
     active: bool = fields.typed_field(default=True)
-    
+
     @classmethod
-    def init_pages(
-        cls, node: Node, acc: dict[Any, Page]
-    ):
+    def init_pages(cls, node: Node, acc: dict[Any, Page]):
         return init_if_type(
             node,
             acc,
             nodes.Person,
             cls,
             nodes.remove_children,
-            and_func = lambda n: n.profile,
+            and_func=lambda n: n.profile,
         )
 
     def extract_content(
-        self, node: Node,
+        self,
+        node: Node,
     ):
         return extract_text_with_child(
             self,
@@ -315,6 +320,7 @@ class Person(Page):
 
 person = Person.new
 
+
 @attrs.define(frozen=True)
 class Organisation(Page):
 
@@ -324,22 +330,21 @@ class Organisation(Page):
         default=xtuples.iTuple()
     )
     active: bool = fields.typed_field(default=True)
-    
+
     @classmethod
-    def init_pages(
-        cls, node: Node, acc: dict[Any, Page]
-    ):
+    def init_pages(cls, node: Node, acc: dict[Any, Page]):
         return init_if_type(
             node,
             acc,
             nodes.Organisation,
             cls,
             nodes.remove_children,
-            and_func = lambda n: n.profile,
+            and_func=lambda n: n.profile,
         )
 
     def extract_content(
-        self, node: Node,
+        self,
+        node: Node,
     ):
         return extract_text_containing(
             self,
@@ -348,9 +353,11 @@ class Organisation(Page):
             clean_func=nodes.remove_children,
         )
 
+
 organisation = Organisation.new
 
 # -----------------------------------------------
+
 
 @attrs.define(frozen=True)
 class Brief(Page):
@@ -374,14 +381,16 @@ class Brief(Page):
     def nav_title(cls):
         return "Briefs"
 
+
 brief = Brief.new
-  
+
+
 @attrs.define(frozen=True)
 class Paper(Page):
 
     title: str = fields.typed_field()
     created: datetime.date = fields.typed_field()
-    
+
     active: bool = fields.typed_field(default=True)
 
     handle: Optional[str] = fields.optional_field()
@@ -412,7 +421,9 @@ class Paper(Page):
         s = utils.qmd_header(yml)
         return s
 
+
 article = Paper.new
+
 
 @attrs.define(frozen=True)
 class Post(Page):
@@ -423,7 +434,7 @@ class Post(Page):
 
     title: str = fields.typed_field()
     created: datetime.date = fields.typed_field()
-    
+
     active: bool = fields.typed_field(default=True)
 
     handle: Optional[str] = fields.optional_field()
@@ -453,6 +464,7 @@ class Post(Page):
 
     # def section(self):
     #     return
+
 
 post = Post.new
 

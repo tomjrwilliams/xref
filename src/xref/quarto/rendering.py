@@ -46,12 +46,13 @@ def temp_dir(tempDir=None):
     with tempfile.TemporaryDirectory() as dp:
         yield dp
 
+
 def render(
     qmd_text,
-    fmt, # eg. html
+    fmt,  # eg. html
     fp_stem,
-    root_dir, # of repo
-    with_output=True
+    root_dir,  # of repo
+    with_output=True,
     #
 ):
 
@@ -77,7 +78,9 @@ def render(
                 "quarto",
                 "render",
                 str(fp),
-                "--to {} --execute-daemon-restart".format(fmt),
+                "--to {} --execute-daemon-restart".format(
+                    fmt
+                ),
             ]
         )
 
@@ -134,4 +137,3 @@ def render(
         f.write(html)
 
     return fp_html
-

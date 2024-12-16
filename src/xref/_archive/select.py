@@ -1,5 +1,3 @@
-
-
 # selectors
 
 # for traversing node graph / finding nodes in database
