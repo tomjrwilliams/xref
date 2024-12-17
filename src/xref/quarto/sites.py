@@ -53,7 +53,7 @@ class Site(
     ...         ]
     ...     ))
     ... )
-    >>> _ = list(map(print, write_yaml(site).split("\n")))
+    >>> map_print(write_yaml(site).split("\n"))
     title: "tbc"
     navbar:
       title: "top"

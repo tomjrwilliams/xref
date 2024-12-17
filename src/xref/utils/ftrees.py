@@ -6,8 +6,12 @@ from typing import (
     TypeVar,
     Optional,
     Callable,
+    Iterable,
     overload,
 )
+
+def map_print(v: Iterable):
+    list(map(print, v))
 
 # ------------------------------------
 
