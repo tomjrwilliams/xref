@@ -19,6 +19,10 @@ class Page:
 # the difference between orgs, people, topics is where the relevant header appears in the nav
 # and what level of depth listicles are generated for them
 
+# where can have listicles that are the system generated blogs based on eg. author date, tags
+
+# but then can also have a "manually" created listicle that just lists the pages in an article as paragraphs
+
 
 # so each is a subclass of tag
 # added as an annotation
@@ -64,6 +68,8 @@ class Label(Annotation):
     pass
 
 
+# bold, strike through, italics, etc.
+
 class Hyperlink(Annotation):
     pass
 
@@ -75,8 +81,26 @@ class Tag(Annotation):
 # some are logical annoations (for indexing), some are content / formatting (eg. hyperlink)
 # field to indicate which?
 
+# term and def, presume (assert) appear after one another?
+
+
+# one might want to use block quotes for eg. building up the one-article listicles (to quote the doc being refd)
+
+
+# have a paraghraph level tag for eg. (non format, logical annotation) for which to use as the summary for the article
+# which could also be between two tags (ie. a slice) 
+
+
+# so for labels, if provided twice, indicates a start end (int range)
+
+
+# in that case, can apply more than once 
+# so also need to be able to write a lbael with no content which is then dropped from format, space removed, hence just used as an int slicer
+
 
 class Paragraph(Element):
+
+    # need to be able to tag the paragraph as a whole
 
     text: str
     keys: dict[int, str]
