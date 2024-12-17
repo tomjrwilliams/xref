@@ -1,5 +1,5 @@
-
 from typing import NamedTuple
+
 
 class NamedTupleBase(NamedTuple):
 
@@ -8,7 +8,12 @@ class NamedTupleBase(NamedTuple):
         fields = cls._fields
         defaults = cls._field_defaults
         if not all(k in fields for k in kws.keys()):
-            raise ValueError("Invalid:", cls, kws)
+            raise ValueError(
+                "Invalid:", cls, kws, fields, [
+                    k for k in kws.keys()
+                    if k not in fields
+                ]
+            )
         return cls(
             **{
                 k: kws.get(k, defaults.get(k, None))

@@ -1,16 +1,7 @@
 from __future__ import annotations
 
-from typing import Optional
-
-import functools
-
-
-import typing
-
-import hashlib
 
 # ------------------------------------
-
 
 
 def _indent(code: str, n=1):
@@ -68,11 +59,13 @@ def qmd_catch_error(
                 "    tb = traceback.format_exc()",
             ]
         )
-    ) + ("" if not print else qmd_print_error(**print_kwargs))
+    ) + (
+        "" if not print else qmd_print_error(**print_kwargs)
+    )
 
 
 def qmd_code_block(
-    code, yml = None, catch=True, print=True, **print_kwargs
+    code, yml=None, catch=True, print=True, **print_kwargs
 ):
     return "\n".join(
         [
@@ -81,9 +74,9 @@ def qmd_code_block(
             "#| warning: false",
             "#| fig-align: center",
             "#| layout-align: center",
-        ] + (
-            [] if yml is None else [yml]
-        ) + [
+        ]
+        + ([] if yml is None else [yml])
+        + [
             (
                 code
                 if catch is False
@@ -94,5 +87,6 @@ def qmd_code_block(
             "```",
         ]
     )
+
 
 # ------------------------------------

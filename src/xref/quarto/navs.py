@@ -1,7 +1,12 @@
 from __future__ import annotations
 
 import enum
-from typing import NamedTuple, Optional, Union, TYPE_CHECKING
+from typing import (
+    NamedTuple,
+    Optional,
+    Union,
+    TYPE_CHECKING,
+)
 
 from ..utils import *
 
@@ -216,88 +221,6 @@ class NavSide(
 
 # ------------------------------------
 
-
-# A single sidebar item without an id or title will result in a global sidebar applied to all pages. A sidebar with an id or title will only be applied to pages within the contents of the sidebar or pages that specify the sidebar id.
-class FieldsNav(NamedTuple):
-    top: NavTop
-    # navbar
-    side: list[NavSide]
-    # sidebar
-
-
-class Nav(
-    FieldsNav,
-    TraitYmlHasRepr,
-    TraitYmlHasFieldMap,
-):
-    r"""
-    >>> nav = (
-    ...     Nav.new()
-    ...     .set(top=NavTop.new(
-    ...         title="top",
-    ...         tools=[
-    ...             NavTool.new(href="tool.qmd"),
-    ...             "test.qmd",
-    ...             NavItem.new(
-    ...                 href="text.qmd",
-    ...                 text="Test"
-    ...             ),
-    ...         ],
-    ...         left = [
-    ...             "test.qmd",
-    ...             NavItem.new(
-    ...                 href="text.qmd",
-    ...                 text="Test",
-    ...                 contents=["abc.qmd", NavItem.new(text="new", href="")]
-    ...             ),
-    ...             "def.qmd",
-    ...             NavItem.new(href="b", text="")
-    ...         ]
-    ...     ))
-    ... )
-    >>> _ = list(map(print, write_yaml(nav).split("\n")))
-    title: "top"
-    tools:
-      - href: tool.qmd
-      - test.qmd
-      - href: text.qmd
-        text: "Test"
-    left:
-      - test.qmd
-      - href: text.qmd
-        text: "Test"
-        contents:
-          - abc.qmd
-          - href:
-            text: "new"
-      - def.qmd
-      - href: b
-        text: ""
-    """
-    @classmethod
-    def cls(cls, self: Nav):
-        return self
-
-    @classmethod
-    def yml_field_map(cls):
-        return dict(
-            top="navbar",
-            side="sidebar",
-        )
-
-# ------------------------------------
-
-if TYPE_CHECKING:
-    nav = (
-        fTree.new(Nav.new())
-        .fork(NavTop.new)
-        .call("set", title="top")
-        .merge(lambda nav, top: nav.set(top=top))
-        .done()
-    )
-
-# ------------------------------------
-
 # example hybrid:
 
 # To do this, provide a group of sidebar entries and link each group of sidebar entries with a navbar entry by matching their titles and listing the page linked from the navbar as the first content in the sidebar group
@@ -347,5 +270,7 @@ if TYPE_CHECKING:
 
 
 # Note that the first sidebar definition contains a few options (e.g. style and background). These options are automatically inherited by the other sidebars.
+
+# A single sidebar item without an id or title will result in a global sidebar applied to all pages. A sidebar with an id or title will only be applied to pages within the contents of the sidebar or pages that specify the sidebar id.
 
 # ------------------------------------

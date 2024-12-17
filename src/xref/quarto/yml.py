@@ -1,11 +1,14 @@
 import enum
-from typing import NamedTuple, Optional, Any
+from typing import NamedTuple, Optional, Any, Union
 from functools import partial
 
 from .core import *
 
+import yaml
+
 
 # ------------------------------------
+
 
 class TraitYml(TraitQuarto):
     pass
@@ -41,22 +44,22 @@ class TraitYmlHasQuoteMap(TraitYml):
 # ------------------------------------
 
 
-class YmlLine(NamedTuple):
-    indent: int
-    is_list: bool
-    key: Optional[str]
-    value: Optional[str]
+class Quoted(str):
+    pass
 
+def quoted_presenter(dumper: yaml.Dumper, data):
+    return dumper.represent_scalar(
+        'tag:yaml.org,2002:str',
+        data,
+        style='"'
+    )
 
-NULL = "null"
-
-# ------------------------------------
-
+yaml.add_representer(Quoted, quoted_presenter)
 
 def yml_quote(s: str | enum.StrEnum):
     if isinstance(s, enum.StrEnum):
         s = s.value
-    return f'"{s}"'
+    return Quoted(s)
 
 
 def yml_should_quote(
@@ -78,129 +81,74 @@ def yml_should_quote(
 
 # ------------------------------------
 
-
-def gen_yaml_lines(
-    obj: TraitYml,
-    indent: int = -1,
-    ix: Optional[int] = None,
+def rec_to_yaml_dict(
+    obj: Union[
+        None,
+        int,
+        bool,
+        str, 
+        TraitYmlHasRepr,
+        list,
+    ],
 ):
-    # what a cluster fuck
-    if not isinstance(obj, TraitYmlHasRepr):
-        raise ValueError(obj)
-    field_map: dict[str, str] = {}
-    if isinstance(obj, TraitYmlHasFieldMap):
-        field_map = obj.yml_field_map()
-    quote_map: dict[str, bool] = {}
-    if isinstance(obj, TraitYmlHasQuoteMap):
-        quote_map = obj.yml_quote_map()
-    keep_nulls = isinstance(obj, TraitYmlKeepNullFields)
-    if not isinstance(obj, TraitYmlMergeParent):
-        indent += 1
-    ks = obj._fields
-    is_lists = [
-        isinstance(getattr(obj, k), list) for k in ks
-    ]
-    k_ixs = sum(
-        [
-            (
-                [(k, None)]
-                if not is_list
-                else [
-                    (k, i)
-                    for i in range(len(getattr(obj, k)))
-                ]
+    if isinstance(obj, list):
+        return [
+            rec_to_yaml_dict(v) for v in obj
+        ]
+    elif isinstance(obj, TraitYmlHasRepr):
+        fields = obj._fields
+        field_map: dict[str, str] = {}
+        if isinstance(obj, TraitYmlHasFieldMap):
+            field_map = obj.yml_field_map()
+        quote_map: dict[str, bool] = {}
+        if isinstance(obj, TraitYmlHasQuoteMap):
+            quote_map = obj.yml_quote_map()
+        keep_nulls = isinstance(obj, TraitYmlKeepNullFields)
+        res = {}
+        for k in fields:
+            v = getattr(obj, k)
+            quote = yml_should_quote(
+                k, v, quote_map
             )
-            for k, is_list in zip(ks, is_lists)
-        ],
-        [],
-    )
-    n_null = 0
-    for k, k_ix in k_ixs:
-        v = getattr(obj, k)
-        quote = yml_should_quote(k, v, quote_map)
-        k = field_map.get(k, k)
-
-        # ix = child of list node
-        # k_ix = list field
-
-        if k_ix is not None:
-            v = v[k_ix]
-
-        if v is None:
-            if not keep_nulls:
+            if v is None and not keep_nulls:
                 continue
-            v = NULL
+            elif isinstance(v, list):
+                v = [
+                    rec_to_yaml_dict(vv)
+                    for vv in v
+                ]
+            elif isinstance(v, TraitYmlMergeParent):
+                res = {
+                    **res,
+                    **rec_to_yaml_dict(v)
+                }
+            elif isinstance(v, TraitYmlHasRepr):
+                v = rec_to_yaml_dict(v)
+            elif isinstance(v, str) and quote:
+                v = yml_quote(v)
+            else:
+                assert isinstance(v, (
+                    bool, int, str
+                ))
+            res[field_map.get(k, k)] = v
+        return res
+    else:
+        assert isinstance(obj, (
+            bool, int, str
+        ))
+    return obj
 
-        k_list = isinstance(k_ix, int)
-        p_list = isinstance(ix, int) and n_null == 0
-
-        if k_ix == 0:
-            # in theory cant be none as was list
-            yield YmlLine(
-                indent
-                + (isinstance(ix, int) and not p_list),
-                p_list,
-                key=k,
-                value=None,
-            )
-        elif isinstance(k_ix, int):
-            k = None
-
-        if isinstance(v, TraitYmlHasRepr):
-            yield from gen_yaml_lines(
-                v,
-                indent=indent
-                + (isinstance(ix, int) and not p_list),
-                ix=k_ix,
-            )
-            n_null += 1
-            continue
-
-        if isinstance(v, str) and quote:
-            v = yml_quote(v)
-        elif not isinstance(v, str):
-            v = str(v).lower()
-
-        yield YmlLine(
-            indent
-            + (
-                isinstance(k_ix, int)
-                + (isinstance(ix, int) and not p_list)
-            ),
-            p_list or k_list,
-            key=None if k_list else k,
-            value=v,
+def write_yaml(obj: TraitYml, **kwargs):
+    d: dict = rec_to_yaml_dict(obj)
+    return yaml.dump(
+        d, 
+        default_flow_style=kwargs.get(
+            "default_flow_style", False
+        ),
+        sort_keys=kwargs.get(
+            "sort_keys", False
         )
-        n_null += 1
-
-    return
-
-
-def write_yaml_line(pad: str, yl: YmlLine):
-    return (
-        (pad * (yl.indent - 1))
-        + (
-            ""
-            if not yl.is_list
-            else ((len(pad) - 2) * pad[0]) + ("- ")
-        )
-        + ("" if not yl.key else f"{yl.key}: ")
-        + ("" if not yl.value else yl.value)
-    )
-
-
-def write_yaml(
-    obj: TraitYml,
-    pad: str = "  ",
-    indent: int = -1,
-    ix: Optional[int] = None,
-):
-    return "\n".join(
-        map(
-            partial(write_yaml_line, pad),
-            gen_yaml_lines(obj, indent=indent, ix=ix),
-        )
-    )
+    ).strip()
 
 
 # ------------------------------------

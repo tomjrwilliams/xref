@@ -1,4 +1,16 @@
-# virtaul repr of site
+from __future__ import annotations
+
+from typing import (
+    TYPE_CHECKING,
+)
+
+from ..utils import *
+from .. import quarto as q
+
+# ------------------------------------
+
+
+# virtual repr of site
 # can be re-indexed / parsed after the fact
 
 
@@ -70,6 +82,7 @@ class Label(Annotation):
 
 # bold, strike through, italics, etc.
 
+
 class Hyperlink(Annotation):
     pass
 
@@ -88,13 +101,13 @@ class Tag(Annotation):
 
 
 # have a paraghraph level tag for eg. (non format, logical annotation) for which to use as the summary for the article
-# which could also be between two tags (ie. a slice) 
+# which could also be between two tags (ie. a slice)
 
 
 # so for labels, if provided twice, indicates a start end (int range)
 
 
-# in that case, can apply more than once 
+# in that case, can apply more than once
 # so also need to be able to write a lbael with no content which is then dropped from format, space removed, hence just used as an int slicer
 
 

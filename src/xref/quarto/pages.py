@@ -1,3 +1,56 @@
+from __future__ import annotations
+
+from typing import (
+    TYPE_CHECKING,
+)
+
+from ..utils import *
+
+from .core import *
+
+from .yml import *
+from .navs import *
+
+# ------------------------------------
+
+class FieldsPage(NamedTupleBase):
+    title: str
+
+class Page(
+    FieldsPage,
+    TraitYmlHasRepr,
+    TraitYmlHasFieldMap
+):
+    pass
+
+# ------------------------------------
+
+class FieldsAboutPage(NamedTupleBase):
+    title: str
+
+class FieldsAboutPage(
+    FieldsPage,
+    TraitYmlHasRepr,
+    TraitYmlHasFieldMap
+):
+    pass
+
+# ------------------------------------
+
+# https://quarto.org/docs/websites/website-listings.html
+
+class FieldsListing(NamedTupleBase):
+    title: str
+
+class Page(
+    FieldsPage,
+    TraitYmlHasRepr,
+    TraitYmlHasFieldMap
+):
+    pass
+
+# ------------------------------------
+
 # page
 
 # title
@@ -98,38 +151,4 @@ format:
     return res
 
 
-# -------------------------------------------------------------------
-
-# website
-
-# _quarto.yml
-
-# project:
-#   type: website
-
-# website:
-#   title: "today"
-#   navbar:
-# ...
-
-# website:
-#   navbar:
-#     background: primary
-#     search: true
-#     left:
-#       - text: "Home"
-#         file: index.qmd
-#       - talks.qmd
-#       - about.qmd
-
-
-# footer
-
-# website:
-#   page-footer:
-#     left: "Copyright 2021, Norah Jones"
-#     right:
-#       - icon: github
-#         href: https://github.com/
-#       - icon: twitter
-#         href: https://twitter.com/
+# ------------------------------------

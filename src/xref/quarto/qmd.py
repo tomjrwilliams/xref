@@ -1,4 +1,3 @@
-
 from typing import Union, Optional
 import polars
 
@@ -12,12 +11,15 @@ ORDER_ENRICH = 0
 ORDER_FORMAT = 1
 ORDER_EMBED = 2
 
+
 class QmdMarkup(NamedTupleBase):
-    
+
     def sort_key(self):
         raise ValueError(type(self), self)
 
+
 # ------------------------------------
+
 
 class QmdLoc(NamedTupleBase):
     i: Optional[tuple[int, int]]
@@ -26,19 +28,19 @@ class QmdLoc(NamedTupleBase):
         return self.i is None
 
     def sort_key(self):
-        res = (
-            -1 if self.is_empty()
-            else self.i[-1]
-        )
+        res = -1 if self.is_empty() else self.i[-1]
         if res is None:
             raise ValueError(self)
         return res
 
+
 # ------------------------------------
+
 
 class QmdLocUpdate(NamedTupleBase):
     offsets: dict[int, int]
     more: list[dict[int, int]]
+
 
 def update_qmd_loc(
     loc: QmdLoc,
@@ -59,7 +61,9 @@ def update_qmd_loc(
                     end += offset
     return QmdLoc((start, end))
 
+
 # ------------------------------------
+
 
 class QmdFormat(QmdMarkup):
     loc: QmdLoc
@@ -67,47 +71,62 @@ class QmdFormat(QmdMarkup):
     def sort_key(self):
         return ORDER_FORMAT, self.loc.sort_key()
 
+
 class QmdHeader(QmdFormat):
     loc: QmdLoc
     depth: int
 
+
 class QmdItalics(QmdFormat):
     pass
+
 
 class QmdBold(QmdFormat):
     pass
 
+
 class QmdBoldItalics(QmdFormat):
     pass
+
 
 class QmdStrikeThrough(QmdFormat):
     pass
 
+
 class QmdCodeVerbatim(QmdFormat):
     pass
+
 
 class QmdBlockQuote(QmdFormat):
     pass
 
+
 class QmdMathInline(QmdFormat):
     pass
+
 
 class QmdMathDisplay(QmdFormat):
     pass
 
+
 class QmdCrossReference(QmdFormat):
     pass
+
 
 class QmdList(QmdFormat):
     pass
 
+
 class QmdListOrdered(QmdList):
     pass
+
 
 class QmdListUnordered(QmdList):
     pass
 
+
 # ^ these get spicy, need to add tabs? or no, just need to do string replace dpeendnet on depth (assume tabbed?)
+
 
 def qmd_surround_string(
     s: str,
@@ -123,14 +142,17 @@ def qmd_surround_string(
     return (
         s[:start]
         + prefix
-        + 
-        s[start:end]
+        + s[start:end]
         + postfix
         + s[end:]
-    ), QmdLocUpdate({
-        start: len(prefix),
-        end: len(prefix) + len(postfix)
-    }, [])
+    ), QmdLocUpdate(
+        {
+            start: len(prefix),
+            end: len(prefix) + len(postfix),
+        },
+        [],
+    )
+
 
 def qmd_update_string(
     s: str,
@@ -142,21 +164,17 @@ def qmd_update_string(
         end = len(s)
     else:
         start, end = loc.i
-    return (
-        s[:start]
-        + rep
-        + s[end:]
-    ), QmdLocUpdate({
-        end: len(rep) - len(s[start:end])
-    }, [])
+    return (s[:start] + rep + s[end:]), QmdLocUpdate(
+        {end: len(rep) - len(s[start:end])}, []
+    )
+
+
 def qmd_format(
     s: str,
     m: QmdFormat,
     updates: list[Optional[QmdLocUpdate]],
 ):
-    loc=update_qmd_loc(
-        m.loc, updates
-    )
+    loc = update_qmd_loc(m.loc, updates)
     prefix = None
     postfix = None
     if isinstance(m, QmdHeader):
@@ -184,11 +202,11 @@ def qmd_format(
         postfix = ""
     else:
         raise ValueError(m)
-    return qmd_surround_string(
-        s, loc, prefix, postfix
-    )
+    return qmd_surround_string(s, loc, prefix, postfix)
+
 
 # ------------------------------------
+
 
 class QmdEnrich(QmdMarkup):
     loc: QmdLoc
@@ -196,21 +214,26 @@ class QmdEnrich(QmdMarkup):
     def sort_key(self):
         return ORDER_ENRICH, self.loc.sort_key()
 
+
 class QmdSubScript(QmdFormat):
     loc: QmdLoc
     v: str
+
 
 class QmdSupScript(QmdFormat):
     loc: QmdLoc
     v: str
 
+
 class QmdTermDefinition(QmdEnrich):
     loc: QmdLoc
     loc_defn: QmdLoc
 
+
 class QmdHyperlink(QmdEnrich):
     loc: QmdLoc
     url: str
+
 
 class QmdImage(QmdEnrich):
     loc: QmdLoc
@@ -218,19 +241,19 @@ class QmdImage(QmdEnrich):
     label: Optional[str]
     alt: Optional[str]
 
+
 class QmdCitation(QmdEnrich):
     loc: QmdLoc
     page: Optional[int | tuple[int, int]]
     chapter: Optional[int]
+
 
 def qmd_enrich(
     s: str,
     m: QmdEnrich,
     updates: list[Optional[QmdLocUpdate]],
 ):
-    loc=update_qmd_loc(
-        m.loc, updates
-    )
+    loc = update_qmd_loc(m.loc, updates)
     prefix = None
     postfix = None
     if isinstance(m, QmdSubScript):
@@ -240,20 +263,14 @@ def qmd_enrich(
         prefix = ""
         postfix = f"^{m.v}^"
     elif isinstance(m, QmdTermDefinition):
-        loc_defn = update_qmd_loc(
-            m.loc, updates
-        )
+        loc_defn = update_qmd_loc(m.loc, updates)
         if not loc_defn.i[0] == loc.i[1]:
             raise ValueError(m)
         prefix = postfix = "\n"
-        s, u1 = qmd_surround_string(
-            s, loc, prefix, postfix
-        )
+        s, u1 = qmd_surround_string(s, loc, prefix, postfix)
         prefix = ": "
         postfix = "\n"
-        s, u2 = qmd_surround_string(
-            s, loc, prefix, postfix
-        )
+        s, u2 = qmd_surround_string(s, loc, prefix, postfix)
         return s, QmdLocUpdate(u1, [u2])
     elif isinstance(m, QmdHyperlink):
         prefix = "["
@@ -284,9 +301,8 @@ def qmd_enrich(
             postfix += "]"
     else:
         raise ValueError(m)
-    return qmd_surround_string(
-        s, loc, prefix, postfix
-    )
+    return qmd_surround_string(s, loc, prefix, postfix)
+
 
 # NOTE: for citation, image caption, assumes text just needs to be wrapped (no database lookups or even string replace)
 # therefore upstream might need to inject / replace the citation label for you (Eg. based on looking up in a database of citations, for the label you want to use for that ref, given the logical tag on the text)
@@ -314,11 +330,13 @@ def qmd_enrich(
 
 # ------------------------------------
 
+
 class QmdEmbed(QmdMarkup):
     loc: QmdLoc
 
     def sort_key(self):
         return ORDER_EMBED, self.loc.sort_key()
+
 
 class QmdHtml(QmdEmbed):
     loc: QmdLoc
@@ -328,6 +346,7 @@ class QmdHtml(QmdEmbed):
     height: Optional[int]
     # eg. pretty tables
 
+
 class QmdPython(QmdEmbed):
     loc: QmdLoc
     py: str
@@ -335,15 +354,18 @@ class QmdPython(QmdEmbed):
     caption: Optional[str]
     table: bool
 
+
 class QmdTable(QmdEmbed):
     loc: QmdLoc
     df: polars.DataFrame
     label: Optional[str]
     # headers, etc.
 
+
 class QmdReferences(QmdEmbed):
     loc: QmdLoc
-    
+
+
 # TODO: QmdMermaid
 # https://quarto.org/docs/authoring/diagrams.html#mermaid-formats
 # ```{mermaid}
@@ -354,26 +376,31 @@ class QmdReferences(QmdEmbed):
 #   C --> E[Result two]
 # ```
 
+
 def qmd_embed(
     s: str,
     m: QmdEmbed,
     updates: list[Optional[QmdLocUpdate]],
 ):
-    loc=update_qmd_loc(
-        m.loc, updates
-    )
+    loc = update_qmd_loc(m.loc, updates)
     if isinstance(m, QmdHtml):
         height = 500 if m.height is None else m.height
         width = 800 if m.width is None else m.width
-        label = "" if m.label is None else f"# | label: {m.label}"
+        label = (
+            ""
+            if m.label is None
+            else f"# | label: {m.label}"
+        )
         s, e = loc.i
-        title = s[s:e]        
-        rep = "\n".join([
-           "```{=html}",
-           label,
-           f'<iframe width="{width}" height="{height}" src="{m.fp}" title="{title}"></iframe>',
-           "```"
-        ])
+        title = s[s:e]
+        rep = "\n".join(
+            [
+                "```{=html}",
+                label,
+                f'<iframe width="{width}" height="{height}" src="{m.fp}" title="{title}"></iframe>',
+                "```",
+            ]
+        )
     elif isinstance(m, QmdPython):
         yml = "\n"
         if m.label:
@@ -392,21 +419,15 @@ def qmd_embed(
         df = m.df
         hs = list(df.schema.keys())
         rs = df.iter_rows(named=False)
-        rep = "\n".join([
-            "|" + "|".join(hs) + "|"
-        ] + [
-            "|" + "|".join([
-                "---" for _ in hs
-            ]) + "|"
-        ] + [
-            "|" + "|".join(r) + "|"
-            for r in rs
-        ])
+        rep = "\n".join(
+            ["|" + "|".join(hs) + "|"]
+            + ["|" + "|".join(["---" for _ in hs]) + "|"]
+            + ["|" + "|".join(r) + "|" for r in rs]
+        )
     elif isinstance(m, QmdReferences):
         rep = ":::{#refs}\n:::"
-    return qmd_update_string(
-        s, loc, rep
-    )
+    return qmd_update_string(s, loc, rep)
+
 
 # ------------------------------------
 
@@ -418,39 +439,32 @@ def qmd_embed(
 #          ["Moon","1,737",7.34e22],
 #          ["Mars","3,390",6.39e23]]
 # Markdown(tabulate(
-#   table, 
+#   table,
 #   headers=["Astronomical object","R (km)", "mass (kg)"]
 # ))
 
 # ------------------------------------
 
+
 def qmd_markup(
     s: str,
     markups: list[QmdMarkup],
 ):
-    markups = list(sorted(
-        markups,
-        key = lambda m: m.sort_key()
-    ))
-    loc_updates: list[
-        Optional[QmdLocUpdate]
-    ] = []
+    markups = list(
+        sorted(markups, key=lambda m: m.sort_key())
+    )
+    loc_updates: list[Optional[QmdLocUpdate]] = []
     for m in markups:
         if isinstance(m, QmdFormat):
-            s, loc_update = qmd_format(
-                s, m, loc_updates
-            )
+            s, loc_update = qmd_format(s, m, loc_updates)
         elif isinstance(m, QmdEnrich):
-            s, loc_update = qmd_enrich(
-                s, m, loc_updates
-            )
+            s, loc_update = qmd_enrich(s, m, loc_updates)
         elif isinstance(m, QmdEmbed):
-            s, loc_update = qmd_embed(
-                s, m, loc_updates
-            )
+            s, loc_update = qmd_embed(s, m, loc_updates)
         else:
             raise ValueError(m)
         loc_updates.append(loc_update)
     return s
+
 
 # ------------------------------------
