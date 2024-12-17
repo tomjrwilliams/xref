@@ -6,7 +6,7 @@ from typing import NamedTuple, Optional, Union, TYPE_CHECKING
 from ..utils import *
 
 from .core import *
-from .qmd import *
+from .yml import *
 
 # ------------------------------------
 
