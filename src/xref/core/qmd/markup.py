@@ -1,7 +1,7 @@
 from typing import Union, Optional
 import polars
 
-from ..utils import *
+from ...utils import *
 from .code import *
 
 # ------------------------------------

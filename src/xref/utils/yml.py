@@ -2,15 +2,14 @@ import enum
 from typing import NamedTuple, Optional, Any, Union
 from functools import partial
 
-from .core import *
-
 import yaml
 
+from .nts import NamedTupleBase
 
 # ------------------------------------
 
 
-class TraitYml(TraitQuarto):
+class TraitYml(NamedTupleBase):
     pass
 
 

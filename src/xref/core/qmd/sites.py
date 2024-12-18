@@ -5,11 +5,8 @@ from typing import (
     TYPE_CHECKING,
 )
 
-from ..utils import *
+from ...utils import *
 
-from .core import *
-
-from .yml import *
 from .navs import *
 
 # ------------------------------------
@@ -171,7 +168,7 @@ class Project(
 
 if TYPE_CHECKING:
     nav = (
-        fTree.new(Site.new())
+        CallPipe.new(Site.new())
         .fork(NavTop.new)
         .call("set", title="top")
         .merge(lambda site, top: site.set(top=top))

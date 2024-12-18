@@ -42,7 +42,7 @@ from subprocess import Popen, PIPE, CalledProcessError
 
 
 @contextlib.contextmanager
-def temp_dir(tempDir=None):
+def temp_dir():
     with tempfile.TemporaryDirectory() as dp:
         yield dp
 
@@ -59,7 +59,7 @@ def render(
     fp_qmd = pathlib.Path(fp_stem + ".qmd")
     fp_html = pathlib.Path(fp_stem + ".html")
 
-    out_files = str(fp_html).replace(".html", "_files")
+    # out_files = str(fp_html).replace(".html", "_files")
 
     with temp_dir() as dp:
 
@@ -122,7 +122,9 @@ def render(
         )
 
         res_fp = str(fp).replace(".qmd", ".html")
-        res_files = str(fp).replace(".qmd", "_files")
+        # res_files = str(fp).replace(".qmd", "_files")
+
+        # assumes self_contained=True (?)
 
         with pathlib.Path(res_fp).open("r") as ff:
             html = ff.read()

@@ -17,8 +17,6 @@ def map_print(v: Iterable):
 
 # ------------------------------------
 
-CH = TypeVar("CH", bound="fTree")
-
 T = TypeVar("T")
 P = TypeVar("P")
 C = TypeVar("C")
@@ -28,12 +26,12 @@ GP = TypeVar("GP")
 GC = TypeVar("GC")
 
 
-class fTree(NamedTuple, Generic[P, C]):
+class CallPipe(NamedTuple, Generic[P, C]):
 
     parent: P
     child: C
 
-    prev: Optional[fTree]
+    prev: Optional[CallPipe]
 
     @classmethod
     def new(cls, child: C):
@@ -60,7 +58,7 @@ class fTree(NamedTuple, Generic[P, C]):
         p: Callable[[GP], GP],
         *args,
         **kwargs,
-    ) -> fTree[GP, P]: ...
+    ) -> CallPipe[GP, P]: ...
 
     @overload
     def merge(
@@ -69,7 +67,7 @@ class fTree(NamedTuple, Generic[P, C]):
         p=None,
         *args,
         **kwargs,
-    ) -> fTree[None, P]: ...
+    ) -> CallPipe[None, P]: ...
 
     def merge(
         self,
@@ -77,7 +75,7 @@ class fTree(NamedTuple, Generic[P, C]):
         p: Optional[Callable[[GP], GP]] = None,
         *args,
         **kwargs,
-    ) -> fTree[GP, P]:
+    ) -> CallPipe[GP, P]:
         c = f(self.parent, self.child, *args, **kwargs)
         assert self.prev.parent is None, self.prev
         if p is not None:
@@ -91,14 +89,14 @@ class fTree(NamedTuple, Generic[P, C]):
         f: Callable[..., Callable[[C], GC]],
         *args,
         **kwargs,
-    ) -> fTree[C, GC]: ...
+    ) -> CallPipe[C, GC]: ...
 
     # paramspec
 
     @overload
     def fork(
         self, f: Callable[..., GC], *args, **kwargs
-    ) -> fTree[C, GC]: ...
+    ) -> CallPipe[C, GC]: ...
 
     def fork(self, f: Callable[[C], GC], *args, **kwargs):
         """
@@ -107,7 +105,7 @@ class fTree(NamedTuple, Generic[P, C]):
         gc = f(*args, **kwargs)
         if isinstance(gc, Callable):
             gc = gc(self.child)
-        return fTree(
+        return CallPipe(
             self.child,
             gc,
             self,
