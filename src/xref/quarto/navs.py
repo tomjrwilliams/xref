@@ -83,6 +83,22 @@ class NavLogo(
 # ------------------------------------
 
 
+class FieldsNavLink(NamedTuple):
+    icon: Optional[str]
+    text: Optional[str]
+    href: Optional[str]
+
+
+class NavLink(
+    FieldsNavLink,
+    TraitYmlHasRepr,
+):
+    pass
+
+
+# ------------------------------------
+
+
 class FieldsNavMenuItem(NamedTuple):
     text: Optional[str]
     href: Optional[str]

@@ -47,14 +47,15 @@ class TraitYmlHasQuoteMap(TraitYml):
 class Quoted(str):
     pass
 
+
 def quoted_presenter(dumper: yaml.Dumper, data):
     return dumper.represent_scalar(
-        'tag:yaml.org,2002:str',
-        data,
-        style='"'
+        "tag:yaml.org,2002:str", data, style='"'
     )
 
+
 yaml.add_representer(Quoted, quoted_presenter)
+
 
 def yml_quote(s: str | enum.StrEnum):
     if isinstance(s, enum.StrEnum):
@@ -81,20 +82,19 @@ def yml_should_quote(
 
 # ------------------------------------
 
+
 def rec_to_yaml_dict(
     obj: Union[
         None,
         int,
         bool,
-        str, 
+        str,
         TraitYmlHasRepr,
         list,
     ],
 ):
     if isinstance(obj, list):
-        return [
-            rec_to_yaml_dict(v) for v in obj
-        ]
+        return [rec_to_yaml_dict(v) for v in obj]
     elif isinstance(obj, TraitYmlHasRepr):
         fields = obj._fields
         field_map: dict[str, str] = {}
@@ -107,47 +107,34 @@ def rec_to_yaml_dict(
         res = {}
         for k in fields:
             v = getattr(obj, k)
-            quote = yml_should_quote(
-                k, v, quote_map
-            )
+            quote = yml_should_quote(k, v, quote_map)
             if v is None and not keep_nulls:
                 continue
             elif isinstance(v, list):
-                v = [
-                    rec_to_yaml_dict(vv)
-                    for vv in v
-                ]
+                v = [rec_to_yaml_dict(vv) for vv in v]
             elif isinstance(v, TraitYmlMergeParent):
-                res = {
-                    **res,
-                    **rec_to_yaml_dict(v)
-                }
+                res = {**res, **rec_to_yaml_dict(v)}
             elif isinstance(v, TraitYmlHasRepr):
                 v = rec_to_yaml_dict(v)
             elif isinstance(v, str) and quote:
                 v = yml_quote(v)
             else:
-                assert isinstance(v, (
-                    bool, int, str
-                ))
-            res[field_map.get(k, k)] = v
+                assert isinstance(v, (bool, int, str))
+            res[field_map.get(k, k).replace("_", "-")] = v
         return res
     else:
-        assert isinstance(obj, (
-            bool, int, str
-        ))
+        assert isinstance(obj, (bool, int, str))
     return obj
+
 
 def write_yaml(obj: TraitYml, **kwargs):
     d: dict = rec_to_yaml_dict(obj)
     return yaml.dump(
-        d, 
+        d,
         default_flow_style=kwargs.get(
             "default_flow_style", False
         ),
-        sort_keys=kwargs.get(
-            "sort_keys", False
-        )
+        sort_keys=kwargs.get("sort_keys", False),
     ).strip()
 
 

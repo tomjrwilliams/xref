@@ -14,6 +14,7 @@ from .navs import *
 
 # ------------------------------------
 
+
 class FieldsSite(NamedTuple):
     title: str
     top: NavTop
@@ -22,6 +23,7 @@ class FieldsSite(NamedTuple):
 
     # TODO: social, comments
     # search
+
 
 class Site(
     FieldsSite,
@@ -87,18 +89,22 @@ class Site(
             footer="page-footer",
         )
 
+
 # ------------------------------------
+
 
 class FieldsFooter(NamedTuple):
     left: Optional[str | NavMenuItem]
     right: Optional[str | NavMenuItem]
     center: Optional[str | NavMenuItem]
 
+
 class Footer(
     FieldsFooter,
     TraitYmlHasRepr,
 ):
     pass
+
 
 #   page-footer:
 #     left: "Copyright 2021, Norah Jones"
@@ -110,14 +116,16 @@ class Footer(
 
 # ------------------------------------
 
-    # theme: cosmo
-    # css: styles.css
-    # toc: true
+# theme: cosmo
+# css: styles.css
+# toc: true
+
 
 class FieldsFormatting(NamedTuple):
     theme: str
     css: str
     toc: bool
+
 
 class Formatting(
     FieldsFormatting,
@@ -125,8 +133,10 @@ class Formatting(
     TraitYmlHasFieldMap,
 ):
     pass
-    
+
+
 # ------------------------------------
+
 
 class FieldsProject(NamedTuple):
     type: str
@@ -135,9 +145,8 @@ class FieldsProject(NamedTuple):
 
     @classmethod
     def yml_field_map(cls):
-        return dict(
-            site="website"
-        )
+        return dict(site="website")
+
     top: NavTop
     # navbar
     side: list[NavSide]
@@ -145,12 +154,14 @@ class FieldsProject(NamedTuple):
 
     footer: Footer
 
+
 class Project(
     FieldsProject,
     TraitYmlHasRepr,
     TraitYmlHasFieldMap,
 ):
     pass
+
 
 # ------------------------------------
 

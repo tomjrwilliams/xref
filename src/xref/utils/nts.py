@@ -9,10 +9,11 @@ class NamedTupleBase(NamedTuple):
         defaults = cls._field_defaults
         if not all(k in fields for k in kws.keys()):
             raise ValueError(
-                "Invalid:", cls, kws, fields, [
-                    k for k in kws.keys()
-                    if k not in fields
-                ]
+                "Invalid:",
+                cls,
+                kws,
+                fields,
+                [k for k in kws.keys() if k not in fields],
             )
         return cls(
             **{

@@ -10,8 +10,10 @@ from typing import (
     overload,
 )
 
+
 def map_print(v: Iterable):
     list(map(print, v))
+
 
 # ------------------------------------
 
